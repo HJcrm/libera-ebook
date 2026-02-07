@@ -1,8 +1,15 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-// Initialize the GoogleGenAI client using process.env.API_KEY directly.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Lazy-initialize the GoogleGenAI client to prevent crash when API key is missing.
+let ai: GoogleGenAI | null = null;
+function getAI(): GoogleGenAI {
+  if (!ai) {
+    const apiKey = process.env.API_KEY || '';
+    ai = new GoogleGenAI({ apiKey });
+  }
+  return ai;
+}
 
 const SYSTEM_INSTRUCTION = `
 당신은 전자책 '리베라프레미(Libera Premi)'의 전담 독서 가이드이자 지식 큐레이터입니다.
@@ -21,7 +28,7 @@ const SYSTEM_INSTRUCTION = `
  */
 export async function askGemini(prompt: string) {
   try {
-    const response = await ai.models.generateContent({
+    const response = await getAI().models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
